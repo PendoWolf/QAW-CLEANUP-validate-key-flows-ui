@@ -7,9 +7,18 @@ export interface AppState {
   lastAction: string;
 }
 
+// Thrown for non-2xx responses. Carries the status so callers (e.g. Pendo
+// failure tracking) don't have to parse it back out of the message.
+export class HttpError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = "HttpError";
+  }
+}
+
 async function call(path: string, method: "GET" | "POST"): Promise<AppState> {
   const res = await fetch(`${BASE}${path}`, { method });
-  if (!res.ok) throw new Error(`${method} ${path} failed: ${res.status}`);
+  if (!res.ok) throw new HttpError(`${method} ${path} failed: ${res.status}`, res.status);
   return res.json() as Promise<AppState>;
 }
 
